@@ -14,7 +14,7 @@ const router = Router();
 
 // Crear nuevos usuarios
 router.post( '/new',[
-    check('nombre', 'El nombre es obligatorio').isString(),
+    check('nombre', 'El nombre es obligatorio').isString().notEmpty(),
     check('password', 'El password es obligatorio').isString().notEmpty(),
     check('email', 'El email es obligatorio').isEmail(),
     validarCampos
