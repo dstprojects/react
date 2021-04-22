@@ -1,5 +1,10 @@
-const { usuarioConectado, usuarioDesconectado } = require("../controllers/sockets");
 const { comprobarJWT } = require("../helpers/jwt");
+const { 
+    usuarioConectado, 
+    usuarioDesconectado, 
+    getUsuarios, 
+    grabarMensaje 
+} = require("../controllers/sockets");
 
 
 class Sockets {
@@ -22,25 +27,38 @@ class Sockets {
                 return socket.disconnect();
             }
 
+            console.log('Cliente conectado')
+
             await usuarioConectado( uid );
+
+            // Unir al usuario a una sala de socket.io
+            socket.join( uid )
+
+
 
             // TODO: validar el JWT
             // si el token no es válido, desconectar
 
             // TODO: Saber que usuario está activo mediante el UID
             
-            // TODO: Emitir todos los usuarios conectados
+            // Emitir lista de usuarios 
+            this.io.emit('lista-usuarios', await getUsuarios() )
 
             // TODO: Socket join
 
-            // TODO: Escuchar cuando el cliente manda un mensahe
-            // mensaje-personal
+            // Escuchar cuando el cliente manda un mensahe
+            socket.on('mensaje-personal', async (payload) => {
+                const mensaje = await grabarMensaje( payload );
+                this.io.to( payload.para ).emit('mensaje-personal', mensaje );
+                this.io.to( payload.de ).emit('mensaje-personal', mensaje );
+            })
 
             // TODO: Disconnect
             // Marcar en la BD que el usuario se desconectó 
 
-            socket.on('disconnect', () => {
-                usuarioDesconectado( uid );
+            socket.on('disconnect', async () => {
+                await usuarioDesconectado( uid );
+                this.io.emit('lista-usuarios', await getUsuarios() )
             })
         
         });
